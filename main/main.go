@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gophercises/urlshort"
+	"github.com/voroskoi/urlshort"
 )
 
 func main() {
@@ -30,6 +30,7 @@ func main() {
 		panic(err)
 	}
 	fmt.Println("Starting the server on :8080")
+	// When calling the handler the server always passes (w http.ResponseWriter, req *http.Request) to the handler function
 	http.ListenAndServe(":8080", yamlHandler)
 }
 
