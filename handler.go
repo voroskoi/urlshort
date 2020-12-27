@@ -1,10 +1,10 @@
 package urlshort
 
 import (
-	"log"
 	"net/http"
 
-	"github.com/go-yaml/yaml"
+	"github.com/mitchellh/mapstructure"
+	yaml "gopkg.in/yaml.v2"
 )
 
 // MapHandler will return an http.HandlerFunc (which also
@@ -45,31 +45,25 @@ func YAMLHandler(yaml []byte, fallback http.Handler) (http.HandlerFunc, error) {
 	if err != nil {
 		return nil, err
 	}
-	pathMap := buildMap(parsedYaml)
+	pathMap := make(map[string]string, len(parsedYaml))
+	err = mapstructure.WeakDecode(parsedYaml, &pathMap)
+	if err != nil {
+		return nil, err
+	}
 	return MapHandler(pathMap, fallback), nil
 }
 
-// fields must be exported, otherwise yaml package do no unmarshall them
+// fields must be exported, otherwise yaml package do not unmarshall them
 type ptoURL struct {
 	Path string `yaml:"path"`
-	Url  string `yaml:"url"`
+	URL  string `yaml:"url"`
 }
 
 func parseYAML(input []byte) ([]ptoURL, error) {
 	var parsed []ptoURL
-	// XXX: it is possible to Unmarshal to map, try it!
 	err := yaml.Unmarshal(input, &parsed)
 	if err != nil {
 		return nil, err
 	}
-	log.Println(parsed)
 	return parsed, nil
-}
-
-func buildMap(parsedYaml []ptoURL) map[string]string {
-	pathMap := make(map[string]string, len(parsedYaml))
-	for _, val := range parsedYaml {
-		pathMap[val.Path] = val.Url
-	}
-	return pathMap
 }
