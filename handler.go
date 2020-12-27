@@ -3,7 +3,6 @@ package urlshort
 import (
 	"net/http"
 
-	"github.com/mitchellh/mapstructure"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -45,11 +44,7 @@ func YAMLHandler(yaml []byte, fallback http.Handler) (http.HandlerFunc, error) {
 	if err != nil {
 		return nil, err
 	}
-	pathMap := make(map[string]string, len(parsedYaml))
-	err = mapstructure.WeakDecode(parsedYaml, &pathMap)
-	if err != nil {
-		return nil, err
-	}
+	pathMap := buildMap(parsedYaml)
 	return MapHandler(pathMap, fallback), nil
 }
 
@@ -66,4 +61,12 @@ func parseYAML(input []byte) ([]ptoURL, error) {
 		return nil, err
 	}
 	return parsed, nil
+}
+
+func buildMap(parsedYaml []ptoURL) map[string]string {
+	pathMap := make(map[string]string, len(parsedYaml))
+	for _, val := range parsedYaml {
+		pathMap[val.Path] = val.URL
+	}
+	return pathMap
 }
