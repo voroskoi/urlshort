@@ -1,13 +1,19 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 
 	"github.com/voroskoi/urlshort"
 )
 
 func main() {
+	redirects := flag.String("redirects", "redirects.yml", "YAML file for stroring redirects")
+	flag.Parse()
+
 	mux := defaultMux()
 
 	// Build the MapHandler using the mux as the fallback
@@ -17,15 +23,13 @@ func main() {
 	}
 	mapHandler := urlshort.MapHandler(pathsToUrls, mux)
 
-	// Build the YAMLHandler using the mapHandler as the
-	// fallback
-	yaml := `
-- path: /urlshort
-  url: https://github.com/gophercises/urlshort
-- path: /urlshort-final
-  url: https://github.com/gophercises/urlshort/tree/solution
-`
-	yamlHandler, err := urlshort.YAMLHandler([]byte(yaml), mapHandler)
+	reds, err := ioutil.ReadFile(*redirects)
+	if err != nil {
+		log.Fatalf("Error reading the YAML file: %s", err)
+	}
+
+	// Build the YAMLHandler using the mapHandler as the fallback
+	yamlHandler, err := urlshort.YAMLHandler(reds, mapHandler)
 	if err != nil {
 		panic(err)
 	}
