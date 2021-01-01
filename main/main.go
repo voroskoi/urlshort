@@ -6,12 +6,13 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/voroskoi/urlshort"
 )
 
 func main() {
-	redirects := flag.String("redirects", "redirects.yml", "YAML file for stroring redirects")
+	redirects := flag.String("redirects", "redirects.yaml", "file for stroring redirects")
 	flag.Parse()
 
 	mux := defaultMux()
@@ -25,17 +26,24 @@ func main() {
 
 	reds, err := ioutil.ReadFile(*redirects)
 	if err != nil {
-		log.Fatalf("Error reading the YAML file: %s", err)
+		log.Fatalf("Error reading the redirects file: %s", err)
 	}
 
-	// Build the YAMLHandler using the mapHandler as the fallback
-	yamlHandler, err := urlshort.YAMLHandler(reds, mapHandler)
-	if err != nil {
-		panic(err)
+	if strings.TrimSuffix(*redirects, "json") == "json" {
+		jsonHandler, err := urlshort.JSONHandler(reds, mapHandler)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("Starting the server on :8080")
+		http.ListenAndServe(":8080", jsonHandler)
+	} else {
+		yamlHandler, err := urlshort.JSONHandler(reds, mapHandler)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("Starting the server on :8080")
+		http.ListenAndServe(":8080", yamlHandler)
 	}
-	fmt.Println("Starting the server on :8080")
-	// When calling the handler the server always passes (w http.ResponseWriter, req *http.Request) to the handler function
-	http.ListenAndServe(":8080", yamlHandler)
 }
 
 func defaultMux() *http.ServeMux {

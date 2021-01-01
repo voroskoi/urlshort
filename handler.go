@@ -3,6 +3,8 @@ package urlshort
 import (
 	"net/http"
 
+	"encoding/json"
+
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -50,8 +52,8 @@ func YAMLHandler(yaml []byte, fallback http.Handler) (http.HandlerFunc, error) {
 
 // fields must be exported, otherwise yaml package do not unmarshall them
 type ptoURL struct {
-	Path string `yaml:"path"`
-	URL  string `yaml:"url"`
+	Path string
+	URL  string
 }
 
 func parseYAML(input []byte) ([]ptoURL, error) {
@@ -63,10 +65,29 @@ func parseYAML(input []byte) ([]ptoURL, error) {
 	return parsed, nil
 }
 
-func buildMap(parsedYaml []ptoURL) map[string]string {
-	pathMap := make(map[string]string, len(parsedYaml))
-	for _, val := range parsedYaml {
+func buildMap(parsed []ptoURL) map[string]string {
+	pathMap := make(map[string]string, len(parsed))
+	for _, val := range parsed {
 		pathMap[val.Path] = val.URL
 	}
 	return pathMap
+}
+
+// JSONHandler reads in JSON based fandler mappings
+func JSONHandler(json []byte, fallback http.Handler) (http.HandlerFunc, error) {
+	parsedJSON, err := parseJSON(json)
+	if err != nil {
+		return nil, err
+	}
+	pathMap := buildMap(parsedJSON)
+	return MapHandler(pathMap, fallback), nil
+}
+
+func parseJSON(input []byte) ([]ptoURL, error) {
+	var parsed []ptoURL
+	err := json.Unmarshal(input, &parsed)
+	if err != nil {
+		return nil, err
+	}
+	return parsed, nil
 }
