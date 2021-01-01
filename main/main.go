@@ -37,7 +37,7 @@ func main() {
 		fmt.Println("Starting the server on :8080")
 		http.ListenAndServe(":8080", jsonHandler)
 	} else {
-		yamlHandler, err := urlshort.JSONHandler(reds, mapHandler)
+		yamlHandler, err := urlshort.YAMLHandler(reds, mapHandler)
 		if err != nil {
 			panic(err)
 		}
